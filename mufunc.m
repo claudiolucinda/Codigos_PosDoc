@@ -33,18 +33,22 @@ end
 %j = size(theta2w,2)-1;
 [n,K] = size(x2);
 %j = size(theta2w,2)-1;
-j=1;
-yp=dfull(:,(j-1)*ns+1:j*ns)-(x2(:,j)*ones(1,ns));
-neg=yp<=0;
-yp=yp.*(1-neg)+neg;
-yp=theta2(j)*(log(yp)-log(dfull(:,(j-1)*ns+1:j*ns)));
-mu=yp.*(1-neg)-1e+6*neg;
-%mu=((x2(:,j)*ones(1,ns)).*dfull(:,(j-1)*ns+1:j*ns)*theta2(j));
+if isempty(dfull)==0
+    j=1;
+    mu=((x2(:,j)*ones(1,ns)).*dfull(:,(j-1)*ns+1:j*ns)*theta2(j));
 
-for j=2:K
-    mu=mu+((x2(:,j)*ones(1,ns)).*vfull(:,(j-2)*ns+1:(j-1)*ns)*theta2(j));
-    
+    for j=2:K
+        mu=mu+((x2(:,j)*ones(1,ns)).*vfull(:,(j-2)*ns+1:(j-1)*ns)*theta2(j));
+
+    end
+else
+    mu=0;
+    for j=1:K
+        mu=mu+((x2(:,j)*ones(1,ns)).*vfull(:,(j-1)*ns+1:j*ns)*theta2(j));
+
+    end
 end
+    
 end
 
 

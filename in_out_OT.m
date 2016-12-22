@@ -1,9 +1,9 @@
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Arquivo Input-Output
-% Copyright 2009 Cláudio R. Lucinda
-% FGV-EESP e EAESP
-% Versão 13/03
+% Copyright 2016 Cláudio R. Lucinda
+% FEA-RP/USP
+% Versão DEZEMBRO DE 2016
 % Agora puxando diretamente do Pharmaeco os dados
 % Cenário Brasil vs. GCR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,67 +13,27 @@ matlabpool close force local
 matlabpool open 2
 
 clear; clc;
-rand('seed',0);
+rng(89282250);
 
-cd  'C:\Users\claudiolucinda\Documents\Disc Taxes\branches\branch06\'
-data_dir='C:\Users\claudiolucinda\Documents\Disc Taxes\branches\branch06\';
+cd  'C:\Users\claudiolucinda\Dropbox\GIT-Posdoc\'
+data_dir='C:\Users\claudiolucinda\Dropbox\Pós Doc 2016\Paper\Data\';
 
-
-
-% Não chamando o gerador de draws
-draw_dem=1;
-if draw_dem==1
-    demogr=load([data_dir 'draws_dem.mat']);
-    demogr=demogr.draws_fin;
-else 
-    'draw_gen_2013.m';
-    clear; clc;
-    demogr=load([data_dir 'draws_dem.mat']);
-    demogr=demogr.draws_fin;
-end
+% IMportando os dados
+regressors=dlmread([data_dir 'regressors.txt'],'\t',1,0);
+other=dlmread([data_dir 'extra_data.txt'],'\t',1,0);
 
 
 
 
-pharma_dir='Z:\Endog Chars\';
-path(data_dir,path);
 
-
-pharma_dir2='Z:\Endog Chars\BLP_Intcodes\';
-
-data=dlmread([pharma_dir 'modelvars.txt'],'\t',1,0);
-marca=dlmread([pharma_dir 'brand_dummies.txt'],'\t',1,0);
-data2=dlmread([pharma_dir 'otherdata.txt'],'\t',1,0);
-instvars=dlmread([pharma_dir 'instvars.txt'],'\t',1,0);
-
-% Importando as coisas
-% data_alt=dlmread([pharma_dir 'outdataSWE2012alt.txt'],'\t',1,0);
-% instvars_alt=dlmread([pharma_dir 'instmat2012alt.txt'],'\t',1,0);
-% data_alt2=dlmread([data_dir 'outdata2SWE2012alt.txt'],'\t',1,0);
-% tfuel_vars=dlmread([pharma_dir 'typefuel.txt'],'\t',1,0);
-% summer=dlmread([pharma_dir 'summer.txt'],'\t',1,0);
-% ksks=dlmread([pharma_dir 'ks_allb.txt'],'\t',1,0);
-% otherstuff=dlmread([pharma_dir 'otherstuffb.txt'],'\t',1,0);
-% marca=dlmread([pharma_dir 'marca.txt'],'\t',1,0);
-% contrafact=dlmread([pharma_dir 'contrafact.txt'],'\t',1,0);
-% data=dlmread([pharma_dir 'outdataSWE2012h.txt'],'\t',1,0);
-% instvars=dlmread([pharma_dir 'instmat2012h.txt'],'\t',1,0);
-% data2=dlmread([pharma_dir 'outdata2SWE2012h.txt'],'\t',1,0);
-% trend=dlmread([pharma_dir 'timetrend.txt'],'\t',1,0);
-% contrafact2=dlmread([pharma_dir 'contrafact2.txt'],'\t',1,0);
-
-
-dum_marca=dummyvar(marca);
 ns=250;
-nr_esp=1;
-specs_wrk=[3 10];
 
-y=data(:,1);
-regrs=data(:,3:end);
+y=other(:,end);
+regrs=regressors(:,2:end);
 x=[ones(size(y)) regrs];
-x2=[x(:,end) x(:,2)]; %x(:,2)  ones(size(x,1),1)];
+x2=[regressors(:,3) regressors(:,4)]; %x(:,2)  ones(size(x,1),1)];
 x1=x(:,1:end-1);
-s_jt=data2(:,1);
+s_jt=regressors(:,1);
 
 %x2(:,1)=x2(:,1)/1000;
 %x1(:,end)=x1(:,end)/1000;
@@ -83,46 +43,51 @@ ncoefs=size(x,2)+size(x2,2);
 
 [n,K] = size(x2);
 
-cdid=data2(:,2);
+cdid=other(:,7);
 cdindex=find(diff(cdid));
 cdindex=[cdindex;size(cdid,1)];
+nmkts=max(cdid);
 
 
-
-stored_draws=1;
+stored_draws=0;
+v=[];
 if stored_draws==1
-    v=load([pharma_dir2 'sigdraws2.mat']);
+    v=load([data_dir 'sigdraws2.mat']);
     v=v.v;
 else
-	vtmp=random('Normal',0,1,max(data2(:,2)),ns/2);
-    v=[vtmp -vtmp];
-    save([pharma_dir2 'sigdraws2.mat'],'v');
+    for k=1:K
+        vtmp=random('Normal',0,1,max(nmkts),ns/2);
+        v=[v vtmp -vtmp];
+    end
+    save([data_dir 'sigdraws2.mat'],'v');
     clear vtmp
 end
-
+demogr=[];
 vfull=v(cdid,:);
-dfull=demogr(cdid,:);
+dfull=[];
+%dfull=demogr(cdid,:);
 argums.dfull=dfull;
 
+% IV Stuff Just to check 
+z=other(:,1:7);
+IV=[x(:,1:end-1) z];
+% Starting Values - Variáveis não RC
+miolo=pinv(IV);
+tmp1=x'*IV;
+t=(tmp1*miolo*x)\(tmp1*miolo*y);
+% KindaOff, mas pq aqui não tô fazendo o robust
 
-coefsses=zeros(2*ncoefs,nr_esp);
-elasts2=zeros(nobs,nr_esp);
 
-mmm=1;
-kkk=1;
-j=specs_wrk(kkk,1);
-k=specs_wrk(kkk,2);
-z=[instvars(:,j) instvars(:,k) instvars(:,j).*instvars(:,k) instvars(:,end)]; % instvars(:,j).*instvars(:,k) instvars(:,end)];% instvars(:,end).*instvars(:,j)]; % instvars(:,end-1).*instvars(:,k)];
+z=other(:,1:7);
 
-display(['Instrumentos São ' num2str(j) ' e ' num2str(k)]);
+
 
 IV=[x1(:,1:end-1) z];
-clear aaa
 
 
 % Starting Values variável RC - preço
 
-theta2w=[1 1e-5]'; % eps eps]';
+theta2w=[1e-5 1e-5]'; % eps eps]';
 
 [theti, thetj, theta2]=find(theta2w);
 
@@ -136,11 +101,8 @@ t=(tmp1*miolo*x1)\(tmp1*miolo*y);
 mvalold = exp(x1*t);
 %oldt2 = zeros(size(theta2));
 %mvalold = exp(mvalold);
-save([pharma_dir2 'mvalold.mat'],'mvalold');
+save([data_dir 'mvalold.mat'],'mvalold');
 %save([data_dir 'ps2.mat'],'s_jt','x1','x2','v');
-theta1_IV=t;
-elasts_IV=theta1_IV(end)*(1-s_jt).*(x2(:,1));
-elasts_pc_IV=quantile(elasts_IV,[.1 .25 .50 .75 .90]);
 
 clear mid y outshr t oldt2 mvalold temp sum1
 
@@ -154,7 +116,7 @@ argums.ns=ns;
 argums.vfull=vfull;
 argums.cdindex=cdindex;
 argums.cdid=cdid;
-argums.data_dir=pharma_dir2;
+argums.data_dir=data_dir;
 argums.s_jt=s_jt;
 
 
@@ -162,13 +124,11 @@ argums.s_jt=s_jt;
 %[delta,its,norms]=tool_contr_PAR2(theta2,argums);
 delta = meanval_PAR4(theta2,argums);
 %toc
-%delta = meanval(theta2,argums);
 temp1 = x1'*IV;
-%temp2 = delta'*IV;
 theta1 = (temp1*miolo*x1)\(temp1*miolo*delta);
 clear temp1 
 gmmresid = delta - x1*theta1;
-save([pharma_dir2 'gmmresid.mat'],'gmmresid')
+save([data_dir 'gmmresid.mat'],'gmmresid')
 
 options = optimset('GradObj','on','DerivativeCheck','off','FinDiffType','central','TolFun',1e-6,'TolX',1e-6,'MaxFunEvals',1000);
 
