@@ -21,7 +21,7 @@ data_dir='C:\Users\claudiolucinda\Dropbox\Pós Doc 2016\Paper\Data\';
 % IMportando os dados
 regressors=dlmread([data_dir 'regressors.txt'],'\t',1,0);
 other=dlmread([data_dir 'extra_data.txt'],'\t',1,0);
-
+path(path,'C:/Users/claudiolucinda/Dropbox/GIT-Posdoc/solvopt/');
 
 
 
@@ -118,76 +118,87 @@ argums.cdindex=cdindex;
 argums.cdid=cdid;
 argums.data_dir=data_dir;
 argums.s_jt=s_jt;
+argums.optimalinstrument=0;
+global args
+args=argums;
 
 
 %tic
 %[delta,its,norms]=tool_contr_PAR2(theta2,argums);
-delta = meanval_PAR4(theta2,argums);
+delta = meanval_PAR4(theta2);
 %toc
 temp1 = x1'*IV;
 theta1 = (temp1*miolo*x1)\(temp1*miolo*delta);
 clear temp1 
 gmmresid = delta - x1*theta1;
 save([data_dir 'gmmresid.mat'],'gmmresid')
+warning('off','MATLAB:dispatcher:InexactMatch');
+options=soptions;
+options(2)=1e-6;
+options(3)=1e-6;
+options(4)=1000;
+options(5)=1;
 
-options = optimset('GradObj','on','DerivativeCheck','off','FinDiffType','central','TolFun',1e-6,'TolX',1e-6,'MaxFunEvals',1000);
+[theta2,funcval2,options]=solvopt(theta2,'gmmobj_solvopt','gradobj_solvopt',options);
 
-%gmmobj(theta2,argums)
+%options = optimset('GradObj','on','DerivativeCheck','off','FinDiffType','central','TolFun',1e-6,'TolX',1e-6,'MaxFunEvals',1000);
 
-tic
-
-[theta2,funcval2,exflag2,output2] = ktrlink(@(theta2) gmmobj(theta2,argums),theta2,[],[],[],[],[],[],[],options,[data_dir 'ktropts-a.txt']);
-
-comp_t = toc/60;
-disp(['Tempo de Execução: ' num2str(comp_t) ' minutos']);
-% Carregando 
-delta = meanval_PAR4(theta2,argums);
-temp1 = x1'*IV;
-temp2 = delta'*IV;
-
-
-theta0 = (temp1*miolo*x1)\temp1*miolo*delta;
-
-% Robust SE
-gmmresid=delta-x1*theta0;
-
-tic
-miolo=inv(IV'*diag(gmmresid.^2)*IV);
-disp(['Tempo de execução - direto: ' num2str(toc/60)]);
+% %gmmobj(theta2,argums)
 % 
 % tic
-% miolo2=wmatrix(IV,gmmresid,[1:size(IV,1)]');
-% disp(['Tempo de execução - função: ' num2str(toc/60)]);
+% 
+% [theta2,funcval2,exflag2,output2] = ktrlink(@(theta2) gmmobj(theta2,argums),theta2,[],[],[],[],[],[],[],options,[data_dir 'ktropts-a.txt']);
+% 
+% comp_t = toc/60;
+% disp(['Tempo de Execução: ' num2str(comp_t) ' minutos']);
+% % Carregando 
+% delta = meanval_PAR4(theta2,argums);
+% temp1 = x1'*IV;
+% temp2 = delta'*IV;
+% 
+% 
+% theta0 = (temp1*miolo*x1)\temp1*miolo*delta;
+% 
+% % Robust SE
+% gmmresid=delta-x1*theta0;
 % 
 % tic
-% miolo3=wmatrix_mex(IV,gmmresid,[1:size(IV,1)]');
-% disp(['Tempo de execução - função compilada: ' num2str(toc/60)]);
-
-
-theta1=(temp1*miolo*temp1')\temp1*miolo*temp2';
-
-argums.invA=miolo;
-argums.v=v;
-argums.perc=1;
-argums.amount=0.01;
-argums.demogr=[];
-argums.dfull=dfull;
-argums.theta1=theta1;
-
-[aaa,tmp]=subst_blp_PAR(theta2,argums);
-elasts2(:,mmm)=tmp;
-elasts_pc=quantile(elasts2(:,1),[.10 .25 .50 .75 .90]);
-
-vcov = var_cov(theta2,argums);
-se = sqrt(diag(vcov));
-
-temp=zeros(2*(size(theta1,1)+length(theta2)),1);
-temp(1:2:end-1,:)=[theta1;theta2];
-temp(2:2:end,:)=se;
-
-coefsses=temp;
-
-%scatter(elasts_IV,elasts2);title('Elasts LOGIT X Elasts RCL'); xlabel('LOGIT'); ylabel('RCL');
-%scatter(x2(:,1),elasts_IV);title('Preço X Elasts LOGIT'); xlabel('Preço 1000SKR'); ylabel('Elasts Logit');
-scatter(x2(:,1),elasts2);title('Preço X Elasts RCL'); xlabel('Preço 1000SKR'); ylabel('Elasts RCL');
-
+% miolo=inv(IV'*diag(gmmresid.^2)*IV);
+% disp(['Tempo de execução - direto: ' num2str(toc/60)]);
+% % 
+% % tic
+% % miolo2=wmatrix(IV,gmmresid,[1:size(IV,1)]');
+% % disp(['Tempo de execução - função: ' num2str(toc/60)]);
+% % 
+% % tic
+% % miolo3=wmatrix_mex(IV,gmmresid,[1:size(IV,1)]');
+% % disp(['Tempo de execução - função compilada: ' num2str(toc/60)]);
+% 
+% 
+% theta1=(temp1*miolo*temp1')\temp1*miolo*temp2';
+% 
+% argums.invA=miolo;
+% argums.v=v;
+% argums.perc=1;
+% argums.amount=0.01;
+% argums.demogr=[];
+% argums.dfull=dfull;
+% argums.theta1=theta1;
+% 
+% [aaa,tmp]=subst_blp_PAR(theta2,argums);
+% elasts2(:,mmm)=tmp;
+% elasts_pc=quantile(elasts2(:,1),[.10 .25 .50 .75 .90]);
+% 
+% vcov = var_cov(theta2,argums);
+% se = sqrt(diag(vcov));
+% 
+% temp=zeros(2*(size(theta1,1)+length(theta2)),1);
+% temp(1:2:end-1,:)=[theta1;theta2];
+% temp(2:2:end,:)=se;
+% 
+% coefsses=temp;
+% 
+% %scatter(elasts_IV,elasts2);title('Elasts LOGIT X Elasts RCL'); xlabel('LOGIT'); ylabel('RCL');
+% %scatter(x2(:,1),elasts_IV);title('Preço X Elasts LOGIT'); xlabel('Preço 1000SKR'); ylabel('Elasts Logit');
+% scatter(x2(:,1),elasts2);title('Preço X Elasts RCL'); xlabel('Preço 1000SKR'); ylabel('Elasts RCL');
+% 

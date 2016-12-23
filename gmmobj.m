@@ -26,18 +26,10 @@ function [f,df] = gmmobj(theta2,args)
 %   s_jt - vetor de participações de mercado
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-theti=args.theti;
-thetj=args.thetj;
-x1=args.x1;
-x2=args.x2;
-IV=args.IV;
-ns=args.ns;
-vfull=args.vfull;
-dfull=args.dfull;
-cdindex=args.cdindex;
-cdid=args.cdid;
-data_dir=args.data_dir;
-s_jt=args.s_jt;
+fnames=fieldnames(args);
+for i=1:length(fnames)
+    eval([fnames{i} '=args.' fnames{i} ';']);
+end
 
 % Carregando 
 delta = meanval_PAR4(theta2,args);

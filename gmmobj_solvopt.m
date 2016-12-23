@@ -25,6 +25,7 @@ function [f,df] = gmmobj_solvopt(theta2)
 %   data_dir - string com o diretório aonde estão os dados
 %   s_jt - vetor de participações de mercado
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+global args
 
 fnames=fieldnames(args);
 for i=1:length(fnames)
@@ -32,7 +33,7 @@ for i=1:length(fnames)
 end
 
 % Carregando 
-delta = meanval_PAR4(theta2,args);
+delta = meanval_PAR4(theta2);
 
 % O que fazer quando o algoritmo sai fora
 if max(isnan(delta)) == 1

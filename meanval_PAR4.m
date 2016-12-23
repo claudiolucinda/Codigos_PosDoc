@@ -1,4 +1,4 @@
-function f = meanval_PAR4(theta2,args)
+function f = meanval_PAR4(theta2)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Esta função Calcula a utilidade média
 % Adaptada e otimizada por Cláudio R. Lucinda
@@ -25,19 +25,12 @@ function f = meanval_PAR4(theta2,args)
 %   data_dir - string com o diretório aonde estão os dados
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-theti=args.theti;
-thetj=args.thetj;
-x1=args.x1;
-x2=args.x2;
-IV=args.IV;
-ns=args.ns;
-vfull=args.vfull;
-dfull=args.dfull;
-cdindex=args.cdindex;
-cdid=args.cdid;
-data_dir=args.data_dir;
-s_jt=args.s_jt;
+global args
 
+fnames=fieldnames(args);
+for i=1:length(fnames)
+    eval([fnames{i} '=args.' fnames{i} ';']);
+end
 
 load([data_dir 'mvalold.mat'])
 
@@ -48,7 +41,7 @@ theta2w = full(sparse(theti,thetj,theta2));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculando aqui o mu
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-mu=mufunc(theta2,args);
+mu=mufunc(theta2);
 expmu = exp(mu);
 
 matlabpool size;
@@ -64,6 +57,7 @@ for t=1:nworkers-1
 	mktexpmu{t} = expmu(mktsubs{t},:);
     mktcdid{t} = cdid(mktsubs{t},:);
     temp3=cdindex(temp1)+1;
+    nsM{t} = ns;
     
 end
 t=nworkers;
@@ -73,6 +67,7 @@ mkts_jt{t} = s_jt(mktsubs{t},:);
 mktmvalold{t} = mvalold(mktsubs{t},:);
 mktexpmu{t} = expmu(mktsubs{t},:);
 mktcdid{t} = cdid(mktsubs{t},:);
+nsM{t} = ns;
 
 %eval(['amost' num2str(nworkers) '=zeros(size(s_jt));']);
 %eval(['amost' num2str(nworkers) '(temp3:temp2,:)=1;']);
@@ -87,6 +82,8 @@ parfor t=1:nworkers,
     cdid_m=mktcdid{t};
     cdid_m=(cdid_m-min(cdid_m))+1;
     temp_oo=dummyvar(cdid_m);
+    ns_m=nsM{t};
+    
         
 %     share=mkts_jt{t};
 %     mvalmval=mktmvalold{t};
@@ -101,7 +98,7 @@ parfor t=1:nworkers,
     norm=1;
     while norm > tol && i2<2500
         i2 = i2+1; 
-        eg = expmu_m.*(mvalmval*ones(1,ns));
+        eg = expmu_m.*(mvalmval*ones(1,ns_m));
         sumexp=temp_oo'*eg;
         denom = 1./(1+sumexp);
         sum1=temp_oo*denom;

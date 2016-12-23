@@ -1,4 +1,4 @@
-function mu=mufunc(theta2,args)
+function mu=mufunc(theta2)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Esta função calcula a parte mu da utilidade média
 % Coloquei esta função aqui para facilitar o processo
@@ -23,6 +23,8 @@ function mu=mufunc(theta2,args)
 %   cdid - vetor que diz a que mercado pertence cada observação
 %   data_dir - string com o diretório aonde estão os dados
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+global args
 
 fnames=fieldnames(args);
 for i=1:length(fnames)
