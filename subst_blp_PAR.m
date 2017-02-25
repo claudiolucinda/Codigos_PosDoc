@@ -28,27 +28,21 @@ function [margeff,elast]=subst_blp_PAR(theta2,args)
 %   v - Vetor de random draws
 %   demogr - Vetor de draws de demografia
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+warning('off','MATLAB:nearlySingularMatrix');
 
-miolo2=args.invA;
-theti=args.theti;
-thetj=args.thetj;
-x1=args.x1;
-x2=args.x2;
-IV=args.IV;
-ns=args.ns;
-vfull=args.vfull;
-dfull=args.dfull;
-cdindex=args.cdindex;
-cdid=args.cdid;
-data_dir=args.data_dir;
-s_jt=args.s_jt;
+%global args
+
+fnames=fieldnames(args);
+for i=1:length(fnames)
+    eval([fnames{i} '=args.' fnames{i} ';']);
+end
 
 
 
 theta2w = full(sparse(theti,thetj,theta2));
 
 mval=meanval_PAR4(theta2,args);
-p = x2(:,1); 
+p = x1(:,end); 
 miolo=miolo2*IV';
 temp1 = x1'*IV;
 temp2 = mval'*IV;
@@ -64,10 +58,7 @@ denom = 1./(1+sumexp);
 sum1=temp_oo*denom;
 shari = eg.*sum1;
 %sharsq=shari.^2;
-j=1;
-yp=dfull(:,(j-1)*ns+1:j*ns)-(x2(:,j)*ones(1,ns));
-neg=yp<=0;
-margeff=-theta2(1)./(yp.*(1-neg)+neg);
+margeff=theta1(end);
 
 
 
@@ -78,7 +69,7 @@ o2=sparse(size(shari,1),size(shari,1));
 
 for i=min(cdid):max(cdid)
    mktsubs{i}=cdid==i;
-   meff{i}=margeff(mktsubs{i},:);
+   meff{i}=margeff;
    sqs{i}=shari(mktsubs{i},:);
     
 end

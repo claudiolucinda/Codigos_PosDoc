@@ -1,4 +1,4 @@
-function f = meanval_PAR4(theta2)
+function f = meanval_PAR4(theta2,args)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Esta função Calcula a utilidade média
 % Adaptada e otimizada por Cláudio R. Lucinda
@@ -25,7 +25,7 @@ function f = meanval_PAR4(theta2)
 %   data_dir - string com o diretório aonde estão os dados
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global args
+%global args
 
 fnames=fieldnames(args);
 for i=1:length(fnames)
@@ -41,7 +41,7 @@ theta2w = full(sparse(theti,thetj,theta2));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculando aqui o mu
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-mu=mufunc(theta2);
+mu=mufunc(theta2,args);
 expmu = exp(mu);
 
 matlabpool size;

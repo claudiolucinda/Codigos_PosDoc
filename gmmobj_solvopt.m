@@ -25,6 +25,8 @@ function [f,df] = gmmobj_solvopt(theta2)
 %   data_dir - string com o diretório aonde estão os dados
 %   s_jt - vetor de participações de mercado
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+warning('off','MATLAB:nearlySingularMatrix');
+
 global args
 
 fnames=fieldnames(args);
@@ -38,6 +40,7 @@ delta = meanval_PAR4(theta2);
 % O que fazer quando o algoritmo sai fora
 if max(isnan(delta)) == 1
 	f = 1e+10;
+    g=((1e+10)*ones(size(theta2))).*sign(theta2);         
     gmmresid=(1e+10)*ones(size(delta));
     df=((1e+10)*ones(size(theta2)));         
     save([data_dir 'gmmresid.mat'],'gmmresid')
@@ -55,7 +58,6 @@ else
 	save([data_dir 'gmmresid.mat'],'gmmresid')
 end
 
-disp(['GMM:  ' num2str(f)])
 disp(['GMM:  ' num2str(f)])
 
 % % Parte do gradiente

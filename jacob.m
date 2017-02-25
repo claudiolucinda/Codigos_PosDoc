@@ -24,19 +24,11 @@ function f = jacob(mval,theta2,args)
 %   data_dir - string com o diretório aonde estão os dados
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%invA=args.invA;
-theti=args.theti;
-thetj=args.thetj;
-x1=args.x1;
-x2=args.x2;
-IV=args.IV;
-ns=args.ns;
-vfull=args.vfull;
-dfull=args.dfull;
-cdindex=args.cdindex;
-cdid=args.cdid;
-data_dir=args.data_dir;
-s_jt=args.s_jt;
+fnames=fieldnames(args);
+for i=1:length(fnames)
+    eval([fnames{i} '=args.' fnames{i} ';']);
+end
+
 
 [n,K]=size(x2);
 theta2w = full(sparse(theti,thetj,theta2));
@@ -53,53 +45,69 @@ clear expmu
 
 J = size(theta2w,2) - 1;
 f1 = zeros(size(cdid,1),K*(J + 1));
-
-% computing (partial share)/(partial sigma)
-
-
-if K>1
-for i = 2:K
-    l=i-1;
-    xv = (x2(:,i)*ones(1,ns)).*vfull(:,(l-1)*ns+1:l*ns);    
-    sumxv=temp_oo'*(xv.*shares);
-    sumxvexp=temp_oo*sumxv;
-    f1(:,i)=mean((shares.*(xv-sumxvexp)),2)';
+%if optimalinstrument==0;
+    
+if isempty(dfull)==0;
+    for i = 2:K
+        l=i-1;
+        xv = (x2(:,i)*ones(1,ns)).*vfull(:,(l-1)*ns+1:l*ns);
+        sumxv=temp_oo'*(xv.*shares);
+        sumxvexp=temp_oo*sumxv;
+        f1(:,i)=mean((shares.*(xv-sumxvexp)),2)';
+        %clear xv temp sum1
+        %f2(:,i)=mean((((p-cmg)./cmg)*ones(1,ns)).*((1./mu).*vfull(:,1:ns)+(1./(1-BigTheta*shares)).*(BigTheta*(shares.*(xv-sumxvexp)))),2);
+    end
     clear xv temp sum1
-end
-end
 
-j=1;
-yp=dfull(:,(j-1)*ns+1:j*ns)-(x2(:,j)*ones(1,ns));
-neg=yp<=0;
-yp=yp.*(1-neg)+neg;
-yp=(log(yp)-log(dfull(:,(j-1)*ns+1:j*ns)));
-dtmp=yp.*(1-neg);
-sumxd=temp_oo'*(dtmp.*shares);
-sumxdexp=temp_oo*sumxd;
-% dtmp=dfull(:,(j-1)*ns+1:j*ns);
-% xd=(x2(:,j)*ones(1,ns)).*dtmp;
-% sumxd=temp_oo'*(xd.*shares);
-% sumxdexp=temp_oo*sumxd;
-f1(:,j)=mean((shares.*(dtmp-sumxdexp)),2)';
-
-% temp=cumsum(xd.*shares);
-% sum1 = temp(cdindex,:);
-% sum1(2:size(sum1,1),:) = diff(sum1);
-% f1(:,j) = mean((shares.*(xd-sum1(cdid,:))),2)';
+    j=1;
+    
+    xd=(x2(:,j)*ones(1,ns)).*dfull(:,(j-1)*ns+1:j*ns);
+    sumxd=temp_oo'*(xd.*shares);
+    sumxdexp=temp_oo*sumxd;
+    f1(:,j)=mean((shares.*(xd-sumxdexp)),2)';
+else
+    for i = 1:K
+        xv = (x2(:,i)*ones(1,ns)).*vfull(:,(K-1)*ns+1:K*ns);
+        sumxv=temp_oo'*(xv.*shares);
+        sumxvexp=temp_oo*sumxv;
+        f1(:,i)=mean((shares.*(xv-sumxvexp)),2)';
+    end
+    clear xv temp sum1
+end    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+% elseif optimalinstrument==1;
 % 
-% 
-% i=1;
-% xv = (x2(:,i)*ones(1,ns)).*vfull(:,1:ns);
-% sumxv=temp_oo'*(xv.*shares);
-% sumxvexp=temp_oo*sumxv;
-% f1(:,i)=mean((shares.*(xv-sumxvexp)),2)';
-%temp = cumsum(xv.*shares);
-%sum1 = temp(cdindex,:);
-%sum1(2:size(sum1,1),:) = diff(sum1);
-%f1(:,i) = mean((shares.*(xv-sum1(cdid,:))),2)';
-clear xd temp sum1
+%     if K>1
+%         for i = 2:K
+%             l=i-1;
+%             xvtemp = xv(:,(l-1)*ns+1:l*ns);
+%             sumxv=temp_oo'*(xvtemp.*shares);
+%             sumxvexp=temp_oo*sumxv;
+%             f1(:,i)=mean((shares.*(xvtemp-sumxvexp)),2)';
+%             %clear xv temp sum1
+%             %f2(:,i)=mean((((p-cmg)./cmg)*ones(1,ns)).*((1./mu).*vfull(:,1:ns)+(1./(1-BigTheta*shares)).*(BigTheta*(shares.*(xv-sumxvexp)))),2);
+%         end
+%     end
+%     
+%     clear xv temp sum1
+%     
+%     j=1;
+%     sumxd=temp_oo'*(xd.*shares);
+%     sumxdexp=temp_oo*sumxd;
+%     f1(:,j)=mean((shares.*(xd-sumxdexp)),2)';
+%     
+%     
+%     
 
-
+%f2(:,j)=mean((((p-cmg)./cmg)*ones(1,ns)).*((1./mu).*dtmp+(1./(1-BigTheta*shares)).*(BigTheta*(shares.*(xd-sumxdexp)))),2);
 
 % If no demogr comment out the next para
 % computing (partial share)/(partial pi)
@@ -131,3 +139,10 @@ for i = 1:size(cdindex,1)
 	f(n:cdindex(i),:) = - H\f1(n:cdindex(i),rel);
 	n = cdindex(i) + 1;
 end
+
+g=f;
+% Fazendo as coisas
+% Acertar aqui as colunas pros diferentes coeficientes
+% Miolo =(1./mu).*vfull+(1./(1-dummyset'*share)).*(shares.*(xv-sumxvexp))
+% grad_supp=(((p-cmg)/cmg)*ones(1,ns)).*Miolo;
+% whole=[f;grad_supp];

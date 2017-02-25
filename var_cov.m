@@ -25,19 +25,14 @@ function f = var_cov(theta2,args)
 %   data_dir - string com o diretório aonde estão os dados
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-invA=args.invA;
-theti=args.theti;
-thetj=args.thetj;
-x1=args.x1;
-x2=args.x2;
-IV=args.IV;
-ns=args.ns;
-vfull=args.vfull;
-dfull=args.dfull;
-cdindex=args.cdindex;
-cdid=args.cdid;
-data_dir=args.data_dir;
-s_jt=args.s_jt;
+warning('off','MATLAB:nearlySingularMatrix');
+
+%global args
+
+fnames=fieldnames(args);
+for i=1:length(fnames)
+    eval([fnames{i} '=args.' fnames{i} ';']);
+end
 
 
 
