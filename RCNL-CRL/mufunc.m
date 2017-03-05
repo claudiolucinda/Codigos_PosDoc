@@ -32,7 +32,7 @@ for i=1:length(fnames)
 end
 
 % Jogando fora o rho, que ele não entra aqui
-theta2=theta2(1:end-1);
+%theta2=theta2(1:end-1);
 
 K = size(x2,2)-1;
 

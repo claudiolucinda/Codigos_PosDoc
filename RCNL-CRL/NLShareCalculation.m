@@ -57,20 +57,39 @@ temp_ooo=sparse(dummyvar(nestid));
 matrix_sel1=sparse(temp_oo*temp_oo');
 matrix_sel2=sparse(temp_ooo*temp_ooo');
 Big_selector=matrix_sel1.*matrix_sel2;
-I_ijg=(1-Sigseg).*log(Big_selector*exp((numer1./(1-Sigseg))));
+denom1=Big_selector*(numer1);
 
-I_i2=zeros(size(I_ijg));
+numer2=denom1.^(1-Sigseg);
+
+denom2=zeros(size(denom1));
 
 % Versão sem paralelização
-for i=1:max(cdid)
-    Sel_I_ijg=I_ijg(cdid==i,:);
-    I_temp2=zeros(size(Sel_I_ijg));
+for i=1:max(Data.cdid)
+    %Sel_denom2=denom1(cdid==i,:);
+    denom_temp2=zeros(size(denom1(Data.cdid==i,:)));
     for j=1:ns
-        I_temp=sum(unique(Sel_I_ijg(:,j)),1);
-        I_temp2(:,j)=exp(I_temp);
+        temp=sum(unique(numer2(Data.cdid==i,j)),1);
+        denom_temp2(:,j)=temp*ones(size(denom_temp2(:,j)));
     end
-    I_i2(cdid==i,:)=I_temp2;
+    denom2(Data.cdid==i,:)=denom_temp2;
 end
+
+denom2=1+denom2;
+
+sijg=numer1./denom1;
+sijg(isnan(sijg)) = 0;
+
+sig=numer2./denom2;
+sig(isnan(sig))   = 0;
+
+sij=sig.*sijg;
+sij(isnan(sij)) = 0;
+
+sjg=mean(sijg,2);
+sg=mean(sig,2);
+sj=mean(sij,2);
+
+s0=mean(1-matrix_sel1*sij,2);
 
 % Versão com paralelização
 % 
@@ -97,24 +116,26 @@ end
 %Proj_mat=D_sel2*((D_sel2'*D_sel2)\D_sel2);
 
 %I_i=Proj_mat*I_ijg;
-I_i=log(1+I_i2);
-
-
-sij = ((numer1.*exp(I_ijg))./(exp(I_ijg./(1-Sigseg)))).*(exp(I_ijg)./exp(I_i));
-sij(isnan(sij)) = 0;
-
-sg = Big_selector*sij;
-
-sijg = sij./sg;
-sijg(isnan(sijg)) = 0;
-
-sj=mean(sij,2);
-sj(isnan(sj)) = 0;
-
-
-sjg=mean(sijg,2);
-sjg(isnan(sjg)) = 0;
-
-s0=sum(1-matrix_sel1*sij,2);
+% I_i=log(1+I_i2);
+% 
+% 
+% sijg=exp(numer1)./denom1;
+% 
+% sij = ((numer1.*exp(I_ijg))./(exp(I_ijg./(1-Sigseg)))).*(exp(I_ijg)./exp(I_i));
+% sij(isnan(sij)) = 0;
+% 
+% sg = Big_selector*sij;
+% 
+% sijg = sij./sg;
+% sijg(isnan(sijg)) = 0;
+% 
+% sj=mean(sij,2);
+% sj(isnan(sj)) = 0;
+% 
+% 
+% sjg=mean(sijg,2);
+% sjg(isnan(sjg)) = 0;
+% 
+% s0=sum(1-matrix_sel1*sij,2);
 
 end

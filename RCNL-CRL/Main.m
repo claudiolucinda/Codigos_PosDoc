@@ -86,16 +86,16 @@ Data.x2=x2;
 theta2_test=[beta_IV_ini(2)./2.3043e+05;1e-5;1e-5;rho_IV_ini];
 
 % Testing MUFUNC
-% test_mu=mufunc(theta2_test,Data);
+test_mu=mufunc(theta2_test,Data);
 % Testing OK
-Delta_Init=regrs(:,1:end-1)*beta_IV_ini(1:end-1);
+Delta_Init=[ones(size(cond_sh)) regrs(:,3:end-1)]*[beta_IV_ini(1);beta_IV_ini(3:end-1)];
 
 % Testing NLShareCalculation
 Data.cdid=cdid;
 Data.nestid=nestid;
 
 % tic
-% [sij,bb,sh,dd,ee] = NLShareCalculation(theta2_test,Delta_Init,Data);
+%[sij,sijg,sj,sjg,s0] = NLShareCalculation(theta2_test,Delta_Init,Data);
 % toc
 
 % Testing OK
@@ -107,9 +107,9 @@ delta0NL=Delta_Init;
 save([data_dir 'mvaloldNL.mat'],'delta0NL');
 Data.data_dir=data_dir;
 Data.sj=s_jt;
-% tic
-% jjj=deltaNL(theta2_test,Data);
-% toc
+%tic
+%jjj=deltaNL(theta2_test,Data);
+%toc
 
 % Número de Iterações: 13
 % Elapsed time is 250.093450 seconds.
@@ -126,9 +126,12 @@ Data.x1=x1;
 
 % 
 tic
-kkk=gmmNL(theta2_test,Data);
+[kkk,lll]=gmmNL(theta2_test,Data);
 toc
+
+
 
 tic
 kkk=jacobNL(delta0NL,theta2_test,Data);
 toc
+% Test OK - leva 2 minutos para avaliação

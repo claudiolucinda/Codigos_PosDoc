@@ -53,26 +53,33 @@ parfor i=1:max(Data.cdid)
         
         expDelta=exp(deltastart)*ones(1,Data.ns);
         % Market share calculation
+        
         numer1          = exp((mu(Data.cdid==i,:)+expDelta)./(1-Sigseg));
         
         temp_ooo=sparse(dummyvar(Data.nestid(Data.cdid==i,:)));
         matrix_sel2=sparse(temp_ooo*temp_ooo');
-        I_ijg=(1-Sigseg).*log(matrix_sel2*exp((numer1./(1-Sigseg))));
-        
-        I_i2=zeros(size(I_ijg));
-        
+        denom1=matrix_sel2*(numer1);
+        numer2=denom1.^(1-Sigseg);
+
+        denom2=zeros(size(denom1));
+
         % Versão sem paralelização
         for j=1:Data.ns
-            I_temp=sum(unique(I_ijg(:,j)),1);
-            I_i2(:,j)=exp(I_temp);
+            temp=sum(unique(numer2(:,j)),1);
+            denom2(:,j)=temp*ones(size(denom2(:,j)));
         end
         
-        
-        I_i=log(1+I_i2);
-        
-        
-        sij = ((numer1.*exp(I_ijg))./(exp(I_ijg./(1-Sigseg)))).*(exp(I_ijg)./exp(I_i));
+        denom2=1+denom2;
+
+        sijg=numer1./denom1;
+        sijg(isnan(sijg)) = 0;
+
+        sig=numer2./denom2;
+        sig(isnan(sig))   = 0;
+
+        sij=sig.*sijg;
         sij(isnan(sij)) = 0;
+
         sh=mean(sij,2);
         sh(isnan(sh)) = 0;
         
@@ -86,7 +93,7 @@ parfor i=1:max(Data.cdid)
         
     end
     delta2{i}=delta1;
-    %disp(['Número de Iterações: ' num2str(i2) ' - Mercado: ' num2str(i)]);
+    disp(['Número de Iterações: ' num2str(i2) ' - Mercado: ' num2str(i)]);
 end
 
 toc

@@ -47,10 +47,10 @@ disp(['GMM:  ' num2str(f)])
 if nargout>1
     % % Parte do gradiente
     if max(isnan(delta)) ~= 1
-        load([data_dir 'mvalold.mat']);
-        temp = jacobNL(mvalold,theta2,Data)';
+        load([data_dir 'mvaloldNL.mat'],'delta0NL');
+        temp = jacobNL(delta0NL,theta2,Data)';
         format long e
-        df = 2*temp'*IV*W*IV'*gmmresid;
+        df = 2*temp*IV*W*IV'*gmmresid;
     end
     disp('Gradient                Theta                  ');
     disp('-----------------------------------------------');
