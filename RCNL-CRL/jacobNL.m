@@ -79,7 +79,7 @@ mu=mufunc(thetaNL,Data);
 derShareDelt=sparse(size(cdid,1),size(cdid,1));
 
 for i=1:max(Data.cdid)
-    % derivative of share w.r.t. delta
+    % derivative of share w.r.t. sigma
     part3           = (sij(Data.cdid==i,:)*sij(Data.cdid==i,:)');
     part2           = ((Sigseg./(1-Sigseg)).*sijg(Data.cdid==i,:)) * sij(Data.cdid==i,:)';
     part1           = diag((sum(sij(Data.cdid==i,:),2)./(1-Sigseg)));
@@ -87,7 +87,7 @@ for i=1:max(Data.cdid)
     Big_selector    = temp_ooo*temp_ooo';
     derShareDelt(Data.cdid==i,Data.cdid==i)    = (part1 - Big_selector.*part2 - part3)./ns;
 
-    
+    % derivative os share w.r.t. sigma
     numer1          = exp((mu(Data.cdid==i,:)+(Delta(Data.cdid==i,:)*ones(1,Data.ns)))./(1-Sigseg));
     denom1          = Big_selector*numer1;
     numer2          =zeros(size(numer1));
@@ -99,9 +99,8 @@ for i=1:max(Data.cdid)
     denom2          = 1 + numer2;
     
     part1           = exp((mu(Data.cdid==i,:)+(Delta(Data.cdid==i,:)*ones(1,Data.ns)))./((1-Sigseg).^2));
-    part2A           = Big_selector*part1;
-    %part2A          = sum((part1 .* numer1),1);
-    part2B          = part2A./denom1;
+    part2A           = Big_selector*(part1.*numer1);
+    part2B           = part2A./denom1;
     part2B(isnan(part2B)) = 0;
     part2 = - log(denom1)-Sigseg*part2B;
     part2(isnan(part2) | isinf(part2))  = 0;
@@ -119,13 +118,15 @@ for i=1:max(Data.cdid)
     
 end
 
-f = zeros(size(cdid,1),size(thetaNL,1));
+%f = zeros(size(cdid,1),size(thetaNL,1));
 
-for i = 1:size(Data.cdid,1)
-	f(Data.cdid==i,:) = - derShareDelt(Data.cdid==i,Data.cdid==i)\f1(Data.cdid==i,:);
+parfor i = 1:max(Data.cdid)
+    warning('off','MATLAB:nearlySingularMatrix');
+	f2 = - derShareDelt(Data.cdid==i,Data.cdid==i)\f1(Data.cdid==i,:);
+    f{i}=f2;
 	
 end
-
+f=real(cat(1,f{:}));
 
 %f=-derShareDelt\f1;
 end

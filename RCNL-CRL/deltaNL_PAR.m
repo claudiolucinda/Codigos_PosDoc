@@ -34,7 +34,7 @@ end
 
 tol=1e-13;
 
-logobsshare              = log(sj);
+%logobsshare              = log(sj);
 
 
 warning off
@@ -45,13 +45,13 @@ disp('Contraction Mapping - Time:');
 tic
 parfor i=1:max(Data.cdid)
     deltastart=delta0NL(Data.cdid==i,:);
-    lshare=logobsshare(Data.cdid==i,:);
+    share=sj(Data.cdid==i,:);
     i2=0;
     norm=1;
     while norm > tol && i2<2500
         i2 = i2+1;
         
-        expDelta=exp(deltastart)*ones(1,Data.ns);
+        expDelta=deltastart*ones(1,Data.ns);
         % Market share calculation
         
         numer1          = exp((mu(Data.cdid==i,:)+expDelta)./(1-Sigseg));
@@ -84,7 +84,8 @@ parfor i=1:max(Data.cdid)
         sh(isnan(sh)) = 0;
         
         
-        delta1  = deltastart+((1-max(thetaNL(end)))*(lshare-log(sh)));
+        %delta1  = deltastart.*((share./sh).^(1-Sigseg));
+        delta1  = deltastart+(1-Sigseg)*(log(share)-log(sh));
         
         norm = max(abs(delta1-deltastart));
         deltastart  = delta1;
@@ -93,7 +94,7 @@ parfor i=1:max(Data.cdid)
         
     end
     delta2{i}=delta1;
-    disp(['Número de Iterações: ' num2str(i2) ' - Mercado: ' num2str(i)]);
+    %disp(['Número de Iterações: ' num2str(i2) ' - Mercado: ' num2str(i)]);
 end
 
 toc

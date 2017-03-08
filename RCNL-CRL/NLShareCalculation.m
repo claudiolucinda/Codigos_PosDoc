@@ -55,7 +55,21 @@ numer1          = exp((mu+expDelta)./(1-Sigseg));
 temp_oo=sparse(dummyvar(cdid));
 temp_ooo=sparse(dummyvar(nestid));
 matrix_sel1=sparse(temp_oo*temp_oo');
-matrix_sel2=sparse(temp_ooo*temp_ooo');
+
+tam=0;
+for i=1:max(Data.cdid)
+    tam=tam+(size(Data.cdid(Data.cdid==i,:),1)).^2;
+end
+
+matrix_sel2=spalloc(size(matrix_sel1,1),size(matrix_sel1,1),tam);
+
+
+for i=1:max(Data.cdid)
+   ttemp_ooo=temp_ooo(Data.cdid==i); 
+   matrix_sel2(Data.cdid==i,Data.cdid==i)=ttemp_ooo*ttemp_ooo'; 
+    
+end    
+%matrix_sel2=sparse(temp_ooo*temp_ooo');
 Big_selector=matrix_sel1.*matrix_sel2;
 denom1=Big_selector*(numer1);
 

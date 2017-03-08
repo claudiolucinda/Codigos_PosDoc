@@ -54,6 +54,7 @@ cdindex=find(diff(cdid));
 cdindex=[cdindex;size(cdid,1)];
 nmkts=max(cdid);
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Creating the random draws
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -83,7 +84,7 @@ Data.dfull=dfull;
 Data.vfull=vfull;
 Data.ns=ns;
 Data.x2=x2;
-theta2_test=[beta_IV_ini(2)./2.3043e+05;1e-5;1e-5;rho_IV_ini];
+theta2_test=[.5;1e-9;1e-9;rho_IV_ini];
 
 % Testing MUFUNC
 test_mu=mufunc(theta2_test,Data);
@@ -94,44 +95,76 @@ Delta_Init=[ones(size(cond_sh)) regrs(:,3:end-1)]*[beta_IV_ini(1);beta_IV_ini(3:
 Data.cdid=cdid;
 Data.nestid=nestid;
 
-% tic
-%[sij,sijg,sj,sjg,s0] = NLShareCalculation(theta2_test,Delta_Init,Data);
-% toc
+tic
+[sij,sijg,sj,sjg,s0] = NLShareCalculation(theta2_test,Delta_Init,Data);
+toc
 
-% Testing OK
-% Tempo (64bit architecture, large cities): 19.4136 seconds
-% Tempo paralelizado: 24.879 seconds ???
-
-% Testing deltaNL
+teste=[s_jt(cdid==1,:) sj(cdid==1,:)];
+ 
+% 
+% % Testing OK
+% % Tempo (64bit architecture, large cities): 19.4136 seconds
+% % Tempo paralelizado: 24.879 seconds ???
+% 
+% % Testing deltaNL
 delta0NL=Delta_Init;
 save([data_dir 'mvaloldNL.mat'],'delta0NL');
 Data.data_dir=data_dir;
 Data.sj=s_jt;
-%tic
-%jjj=deltaNL(theta2_test,Data);
-%toc
-
-% Número de Iterações: 13
-% Elapsed time is 250.093450 seconds.
-
+%[deltas,shares,scond]=testerLOOP(theta2_test,Data);
+% %tic
+% %jjj=deltaNL(theta2_test,Data);
+% %toc
+% 
+% % Número de Iterações: 13
+% % Elapsed time is 250.093450 seconds.
+% 
+% tic
+% jjj=deltaNL_B(theta2_test,Data);
+% toc
+% 
 tic
 jjj=deltaNL_PAR(theta2_test,Data);
 toc
-
-% Um por vez: Elapsed time is 45.901219 seconds. 
-% Paralelização: Elapsed time is 20.186337 seconds.
-% Testing OK
+% [theta1_test, gmmresid]=ivregression(jjj,x1,IV);
+% W = (IV'*IV) \ eye(size(IV,2));
+% f=(gmmresid'*IV)*W*(gmmresid'*IV)';
+% 
+% 
+% 
+% % Um por vez: Elapsed time is 45.901219 seconds. 
+% % Paralelização: Elapsed time is 20.186337 seconds.
+% % Testing OK
 Data.IV=IV;
 Data.x1=x1;
 
+l0=gmmNL(theta2_test,Data);
+dtheta=zeros(size(theta2_test));
+for i=1:size(theta2_test,1)
+   tplus=theta2_test;
+   tplus(i)=tplus(i)+1e-6;
+   l_p=gmmNL(tplus,Data);
+   tminus=theta2_test;
+   tminus(i)=tminus(i)-1e-6;
+   l_m=gmmNL(tmius,Data);
+   dtheta(i)=(l_p-l_m)/2e-6;
+   
+    
+end
+
+[theta2_test dtheta]
+dg=gradient(@(theta) gmmNL(theta2_test,Data),1e-6);
+
+tic
+[lll,dlll]=gmmNL(theta2_test,Data);
+toc
+
+temp=jacobNL(Delta_Init,theta2_test,Data);
 % 
-tic
-[kkk,lll]=gmmNL(theta2_test,Data);
-toc
+[theta_fin,fval]=fminsearch(@(theta) gmmNL(theta,Data),theta2_test);
+% Está funcionando, mas cai pra fora da área em que esse negócio tá
+% definido
 
-
-
-tic
-kkk=jacobNL(delta0NL,theta2_test,Data);
-toc
-% Test OK - leva 2 minutos para avaliação
+% 
+% 
+% % Test OK - leva 2 minutos para avaliação
