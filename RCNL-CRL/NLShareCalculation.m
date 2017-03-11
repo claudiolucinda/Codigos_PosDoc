@@ -1,4 +1,4 @@
-function [sij sijg sj sjg s0]=NLShareCalculation(theta,Delta,Data)
+function [sij sijg sj sjg s0 numer1 denom1 numer2 denom2]=NLShareCalculation(theta,Delta,Data)
 
 % NLShareCalculation - Nested Logit share calculation
 % Originally from Grigolon and Verboven 2014 REStat
@@ -65,7 +65,7 @@ matrix_sel2=spalloc(size(matrix_sel1,1),size(matrix_sel1,1),tam);
 
 
 for i=1:max(Data.cdid)
-   ttemp_ooo=temp_ooo(Data.cdid==i); 
+   ttemp_ooo=temp_ooo(Data.cdid==i,:); 
    matrix_sel2(Data.cdid==i,Data.cdid==i)=ttemp_ooo*ttemp_ooo'; 
     
 end    

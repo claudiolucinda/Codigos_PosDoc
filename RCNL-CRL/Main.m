@@ -96,7 +96,7 @@ Data.cdid=cdid;
 Data.nestid=nestid;
 
 tic
-[sij,sijg,sj,sjg,s0] = NLShareCalculation(theta2_test,Delta_Init,Data);
+[sij,sijg,sj,sjg,s0,numer1,denom1,numer2,denom2] = NLShareCalculation(theta2_test,Delta_Init,Data);
 toc
 
 teste=[s_jt(cdid==1,:) sj(cdid==1,:)];
@@ -137,7 +137,7 @@ toc
 % % Testing OK
 Data.IV=IV;
 Data.x1=x1;
-
+% 
 l0=gmmNL(theta2_test,Data);
 dtheta=zeros(size(theta2_test));
 for i=1:size(theta2_test,1)
@@ -146,22 +146,26 @@ for i=1:size(theta2_test,1)
    l_p=gmmNL(tplus,Data);
    tminus=theta2_test;
    tminus(i)=tminus(i)-1e-6;
-   l_m=gmmNL(tmius,Data);
+   l_m=gmmNL(tminus,Data);
    dtheta(i)=(l_p-l_m)/2e-6;
    
     
 end
 
 [theta2_test dtheta]
-dg=gradient(@(theta) gmmNL(theta2_test,Data),1e-6);
-
-tic
+% dg=gradient(@(theta) gmmNL(theta2_test,Data),1e-6);
+% 
+% tic
 [lll,dlll]=gmmNL(theta2_test,Data);
-toc
+% toc
+% 
 
 temp=jacobNL(Delta_Init,theta2_test,Data);
-% 
+% % 
+
+diary('Output.txt')
 [theta_fin,fval]=fminsearch(@(theta) gmmNL(theta,Data),theta2_test);
+diary off
 % Está funcionando, mas cai pra fora da área em que esse negócio tá
 % definido
 
