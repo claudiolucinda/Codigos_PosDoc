@@ -79,10 +79,9 @@ for i=1:max(Data.cdid)
     partA(isnan(partA) | isinf(partA))  = 0;
     
     partB1          = partA.*sijg(Data.cdid==i,:);
-    partB           = Big_selector*partB1;
+    partB           = Sigseg.*(Big_selector*partB1);
     partB(isnan(partB) | isinf(partB))  = 0;
     
-    partB2          = (1-Sigseg).*partB;
     
     partC1          = (1-Sigseg).*(partA.*sij(Data.cdid==i,:));
     partC           = ones(size(numer1t,1),1)*sum(partC1,1);  
@@ -97,7 +96,7 @@ for i=1:max(Data.cdid)
     end
     partE(isnan(partE) | isinf(partE))  = 0;
     
-    derShareSigseg1 = sij(Data.cdid==i,:).*(partB-partA+partB2+partC-partD-partE);
+    derShareSigseg1 = sij(Data.cdid==i,:).*(partA-partB-partC-partD+partE);
     f1(Data.cdid==i,K) = mean(derShareSigseg1,2);
     
     % Derivative of share w.r.t. theta2 (RC Other than sigma)
@@ -120,7 +119,7 @@ for i=1:max(Data.cdid)
 %                 part3(:,j)=(1-Sigseg).*temp;
 %             end
             part3(isnan(part3) | isinf(part3))  = 0;
-            temp          = sij(Data.cdid==i,:).*(part1-part2-part3);
+            temp          = sij(Data.cdid==i,:).*(part1-part2+part3);
             f1(Data.cdid==i,m)       = mean(temp,2);
             %clear xv temp sum1
             %f2(:,i)=mean((((p-cmg)./cmg)*ones(1,ns)).*((1./mu).*vfull(:,1:ns)+(1./(1-BigTheta*shares)).*(BigTheta*(shares.*(xv-sumxvexp)))),2);
@@ -142,7 +141,7 @@ for i=1:max(Data.cdid)
         %                 part3(:,j)=(1-Sigseg).*temp;
         %             end
         part3(isnan(part3) | isinf(part3))  = 0;
-        temp          = sij(Data.cdid==i,:).*(part1-part2-part3);
+        temp          = sij(Data.cdid==i,:).*(part1-part2+part3);
         f1(Data.cdid==i,l)       = mean(temp,2);
     else
         for m = 2:K-1
@@ -170,7 +169,7 @@ for i=1:max(Data.cdid)
 %                 part3(:,j)=(1-Sigseg).*temp;
 %             end
             part3(isnan(part3) | isinf(part3))  = 0;
-            temp          = sij(Data.cdid==i,:).*(part1-part2-part3);
+            temp          = sij(Data.cdid==i,:).*(part1-part2+part3);
             f1(Data.cdid==i,m)       = mean(temp,2);
         end
     end

@@ -138,21 +138,29 @@ toc
 Data.IV=IV;
 Data.x1=x1;
 % 
-l0=gmmNL(theta2_test,Data);
-dtheta=zeros(size(theta2_test));
-for i=1:size(theta2_test,1)
-   tplus=theta2_test;
-   tplus(i)=tplus(i)+1e-6;
-   l_p=gmmNL(tplus,Data);
-   tminus=theta2_test;
-   tminus(i)=tminus(i)-1e-6;
-   l_m=gmmNL(tminus,Data);
-   dtheta(i)=(l_p-l_m)/2e-6;
-   
-    
-end
-
-[theta2_test dtheta]
+% l0=gmmNL(theta2_test,Data);
+% dtheta=zeros(size(theta2_test));
+% for i=1:size(theta2_test,1)
+%    tplus=theta2_test;
+%    tplus(i)=tplus(i)+1e-6;
+%    l_p=gmmNL(tplus,Data);
+%    tminus=theta2_test;
+%    tminus(i)=tminus(i)-1e-6;
+%    l_m=gmmNL(tminus,Data);
+%    dtheta(i)=(l_p-l_m)/2e-6;
+%    
+%     
+% end
+% 
+% [theta2_test dtheta]
+% % Gradient at theta2_test point
+% 
+% %      5.000000000000000e-01     4.210653515315244e+03
+% %      1.000000000000000e-09     2.293043645295256e+03
+% %      1.000000000000000e-09     2.749692339421017e+01
+% %      8.254138447896402e-01    -1.867928847332223e+01
+%      
+     
 % dg=gradient(@(theta) gmmNL(theta2_test,Data),1e-6);
 % 
 % tic
