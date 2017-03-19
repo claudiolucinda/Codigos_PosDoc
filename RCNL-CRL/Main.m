@@ -73,7 +73,7 @@ else
 end
 demogr=dist_kms(ns,nmkts);
 vfull=v(cdid,:);
-dfull=demogr(cdid,:);
+dfull=demogr(cdid,:)./1000;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -95,11 +95,7 @@ Delta_Init=[ones(size(cond_sh)) regrs(:,3:end-1)]*[beta_IV_ini(1);beta_IV_ini(3:
 Data.cdid=cdid;
 Data.nestid=nestid;
 
-tic
-[sij,sijg,sj,sjg,s0,numer1,denom1,numer2,denom2] = NLShareCalculation(theta2_test,Delta_Init,Data);
-toc
 
-teste=[s_jt(cdid==1,:) sj(cdid==1,:)];
  
 % 
 % % Testing OK
@@ -111,72 +107,53 @@ delta0NL=Delta_Init;
 save([data_dir 'mvaloldNL.mat'],'delta0NL');
 Data.data_dir=data_dir;
 Data.sj=s_jt;
-%[deltas,shares,scond]=testerLOOP(theta2_test,Data);
-% %tic
-% %jjj=deltaNL(theta2_test,Data);
-% %toc
-% 
-% % Número de Iterações: 13
-% % Elapsed time is 250.093450 seconds.
-% 
-% tic
-% jjj=deltaNL_B(theta2_test,Data);
-% toc
-% 
-tic
-jjj=deltaNL_PAR(theta2_test,Data);
-toc
-% [theta1_test, gmmresid]=ivregression(jjj,x1,IV);
-% W = (IV'*IV) \ eye(size(IV,2));
-% f=(gmmresid'*IV)*W*(gmmresid'*IV)';
-% 
-% 
-% 
-% % Um por vez: Elapsed time is 45.901219 seconds. 
-% % Paralelização: Elapsed time is 20.186337 seconds.
-% % Testing OK
+
+meanval_start=deltaNL_PAR(theta2_test,Data);
+[sij,sijg,sj,sjg,s0,numer1,denom1,numer2,denom2] = NLShareCalculation(theta2_test,meanval_start,Data);
+teste=[s_jt(cdid==1,:) sj(cdid==1,:)];
+
+
 Data.IV=IV;
 Data.x1=x1;
-% 
-% l0=gmmNL(theta2_test,Data);
-% dtheta=zeros(size(theta2_test));
-% for i=1:size(theta2_test,1)
-%    tplus=theta2_test;
-%    tplus(i)=tplus(i)+1e-6;
-%    l_p=gmmNL(tplus,Data);
-%    tminus=theta2_test;
-%    tminus(i)=tminus(i)-1e-6;
-%    l_m=gmmNL(tminus,Data);
-%    dtheta(i)=(l_p-l_m)/2e-6;
-%    
-%     
-% end
-% 
-% [theta2_test dtheta]
-% % Gradient at theta2_test point
-% 
-% %      5.000000000000000e-01     4.210653515315244e+03
-% %      1.000000000000000e-09     2.293043645295256e+03
-% %      1.000000000000000e-09     2.749692339421017e+01
-% %      8.254138447896402e-01    -1.867928847332223e+01
-%      
-     
-% dg=gradient(@(theta) gmmNL(theta2_test,Data),1e-6);
-% 
-% tic
-[lll,dlll]=gmmNL(theta2_test,Data);
-% toc
-% 
+[f,df]=gmmNL(theta2_test,Data);
 
-temp=jacobNL(Delta_Init,theta2_test,Data);
-% % 
+%%
 
-diary('Output.txt')
-[theta_fin,fval]=fminsearch(@(theta) gmmNL(theta,Data),theta2_test);
+options = optimset( 'Display','iter',...
+    'GradObj','on','TolCon',1E-6,...
+    'TolFun',1E-6,'TolX',1E-6,...
+    'Hessian', 'off','DerivativeCheck','off','FinDiffType','central');
+
+%     [thetaRCNL, FctValRCNL, exitflagRCNL, output, gradient] = ...
+%         fminunc(angmmNL,theta20RCNL,options);
+
+%
 diary off
-% Está funcionando, mas cai pra fora da área em que esse negócio tá
-% definido
 
-% 
-% 
-% % Test OK - leva 2 minutos para avaliação
+x_L     = [-1e2;-.5;-1e-2;0];           % lower bound (only for the nested logit, to avoid numerical problems when pho gets negative)
+x_U     = [1;.5;1e-2;0.975];       % upper bound (only for the nested logit, to avoid numerical problems when pho gets close to 1)
+[thetaRCNL, FctValRCNL, exitflagRCNL,~,~] = ...
+    ktrlink(@(theta2)gmmNL(theta2,Data),theta2_test, [], [], [], [], x_L, x_U, [], options, 'knitroBLP.opt');
+
+
+meanval_FINAL=deltaNL_PAR(thetaRCNL,Data);
+W = (IV'*IV) \ eye(size(IV,2));
+Data.W=W;
+theta1=(x1'*IV * W * IV'*x1)\(x1'*IV * W * IV'*meanval_FINAL);
+gmmresid = meanval_FINAL - x1*theta1;
+
+save([data_dir 'gmmresid.mat'],'gmmresid');
+save([data_dir 'mvaloldNL.mat'],'meanval_FINAL');
+
+
+th12RCNL      = [theta1 ; abs(thetaRCNL)];
+sterrRCNL     = seNL(th12RCNL,Data);
+
+% Random Coefficient Nested Logit wrt X1
+alpha         = theta1(end);
+priceinc      = x1(:,end);
+
+[ElaRCNL,DiversionRCNL] = ElastNestedLogit(alpha,thetaRCNL,meanval_final,priceinc,Data);
+
+
+
