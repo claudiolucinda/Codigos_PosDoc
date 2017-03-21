@@ -20,7 +20,6 @@ data_dir='C:\Users\claudiolucinda\Dropbox\Pós Doc 2016\Paper\Data\';
 regressors=dlmread([data_dir 'regressors_T.txt'],'\t',1,0);
 other=dlmread([data_dir 'extra_data_T.txt'],'\t',1,0);
 other2=dlmread([data_dir 'extra_data2_T.txt'],'\t',1,0);
-partialout=dlmread([data_dir 'partialregrs.txt'],'\t',1,0);
 
 path(path,'C:/Users/claudiolucinda/Dropbox/GIT-Posdoc/RCNL-CRL/');
 
@@ -74,7 +73,7 @@ else
 end
 demogr=dist_kms(ns,nmkts);
 vfull=v(cdid,:);
-dfull=demogr(cdid,:)./1000;
+dfull=demogr(cdid,:);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,7 +95,11 @@ Delta_Init=[ones(size(cond_sh)) regrs(:,3:end-1)]*[beta_IV_ini(1);beta_IV_ini(3:
 Data.cdid=cdid;
 Data.nestid=nestid;
 
+%tic
+[sij,sijg,sj,sjg,s0,numer1,denom1,numer2,denom2] = NLShareCalculation(theta2_test,Delta_Init,Data);
+%toc
 
+teste=[s_jt(cdid==1,:) sj(cdid==1,:)];
  
 % 
 % % Testing OK
@@ -110,51 +113,26 @@ Data.data_dir=data_dir;
 Data.sj=s_jt;
 
 meanval_start=deltaNL_PAR(theta2_test,Data);
-[sij,sijg,sj,sjg,s0,numer1,denom1,numer2,denom2] = NLShareCalculation(theta2_test,meanval_start,Data);
-teste=[s_jt(cdid==1,:) sj(cdid==1,:)];
-
 
 Data.IV=IV;
 Data.x1=x1;
-[f,df]=gmmNL(theta2_test,Data);
-
-%%
-
-options = optimset( 'Display','iter',...
-    'GradObj','on','TolCon',1E-6,...
-    'TolFun',1E-6,'TolX',1E-6,...
-    'Hessian', 'off','DerivativeCheck','off','FinDiffType','central');
-
-%     [thetaRCNL, FctValRCNL, exitflagRCNL, output, gradient] = ...
-%         fminunc(angmmNL,theta20RCNL,options);
-
-%
-diary off
-
-x_L     = [-1e2;-.5;-1e-2;0];           % lower bound (only for the nested logit, to avoid numerical problems when pho gets negative)
-x_U     = [1;.5;1e-2;0.975];       % upper bound (only for the nested logit, to avoid numerical problems when pho gets close to 1)
-[thetaRCNL, FctValRCNL, exitflagRCNL,~,~] = ...
-    ktrlink(@(theta2)gmmNL(theta2,Data),theta2_test, [], [], [], [], x_L, x_U, [], options, 'knitroBLP.opt');
 
 
-meanval_FINAL=deltaNL_PAR(thetaRCNL,Data);
-W = (IV'*IV) \ eye(size(IV,2));
-Data.W=W;
-theta1=(x1'*IV * W * IV'*x1)\(x1'*IV * W * IV'*meanval_FINAL);
-gmmresid = meanval_FINAL - x1*theta1;
+[lll,dlll]=gmmNL(theta2_test,Data);
 
-save([data_dir 'gmmresid.mat'],'gmmresid');
-save([data_dir 'mvaloldNL.mat'],'meanval_FINAL');
+dll=zeros(size(theta2_test,1));
+theta_back=theta2_test;
+for i=1:size(theta2_test,1);
+    theta2_test(i)=theta2_test(i)+1e-6;
+    lp=gmmNL(theta2_test,Data);
+    theta2_test=theta_back;
+    theta2_test(i)=theta2_test(i)-1e-6;
+    lm=gmmNL(theta2_test,Data);
+    theta2_test=theta_back;
+    dll(i,1)=(lp-lm)/2e-6;
+end
 
-
-th12RCNL      = [theta1 ; abs(thetaRCNL)];
-sterrRCNL     = seNL(th12RCNL,Data);
-
-% Random Coefficient Nested Logit wrt X1
-alpha         = theta1(end);
-priceinc      = x1(:,end);
-
-[ElaRCNL,DiversionRCNL] = ElastNestedLogit(alpha,thetaRCNL,meanval_FINAL,priceinc,Data);
-
+[theta2_test dll]
+    
 
 

@@ -13,16 +13,15 @@ clear; clc;
 rng(89282250);
 
 warning('off','MATLAB:nearlySingularMatrix');
-cd  'C:\Users\claudiolucinda\Dropbox\GIT-Posdoc\RCNL-CRL\'
+cd  'C:\Users\claudiolucinda\Dropbox\GIT-Posdoc\RCNL-ABLP\'
 data_dir='C:\Users\claudiolucinda\Dropbox\Pós Doc 2016\Paper\Data\';
 
 % IMportando os dados
 regressors=dlmread([data_dir 'regressors_T.txt'],'\t',1,0);
 other=dlmread([data_dir 'extra_data_T.txt'],'\t',1,0);
 other2=dlmread([data_dir 'extra_data2_T.txt'],'\t',1,0);
-partialout=dlmread([data_dir 'partialregrs.txt'],'\t',1,0);
 
-path(path,'C:/Users/claudiolucinda/Dropbox/GIT-Posdoc/RCNL-CRL/');
+path(path,'C:/Users/claudiolucinda/Dropbox/GIT-Posdoc/RCNL-ABLP/');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
