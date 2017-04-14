@@ -107,7 +107,7 @@ delta0NL=Delta_Init;
 save([data_dir 'mvaloldNL.mat'],'delta0NL');
 Data.data_dir=data_dir;
 Data.sj=s_jt;
-
+Data.lshare=log(s_jt);
 meanval_start=deltaNL_PAR(theta2_test,Data);
 [sij,sijg,sj,sjg,s0,numer1,denom1,numer2,denom2] = NLShareCalculation(theta2_test,meanval_start,Data);
 teste=[s_jt(cdid==1,:) sj(cdid==1,:)];

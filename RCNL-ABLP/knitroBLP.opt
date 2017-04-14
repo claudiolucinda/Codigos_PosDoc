@@ -334,5 +334,5 @@ scale        yes
 soc          maybe
 
 # Step size tolerance used for terminating the optimization.
-xtol         1e-15
+xtol         1e-9
 

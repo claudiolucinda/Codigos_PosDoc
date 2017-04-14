@@ -45,7 +45,7 @@ disp('Contraction Mapping - Time:');
 tic
 parfor i=1:max(Data.cdid)
     deltastart=delta0NL(Data.cdid==i,:);
-    share=sj(Data.cdid==i,:);
+    lsj=lshare(Data.cdid==i,:);
     i2=0;
     norm=1;
     while norm > tol && i2<2500
@@ -92,7 +92,7 @@ parfor i=1:max(Data.cdid)
         shar=sh*ones(1,size(dsD,2));
         upd=dsD./shar;
         %delta1  = deltastart.*((share./sh).^(1-Sigseg));
-        delta1  = deltastart+upd\(log(share)-log(sh));
+        delta1  = deltastart+upd\(lsj-log(sh));
         
         norm = max(abs(delta1-deltastart));
         deltastart  = delta1;
