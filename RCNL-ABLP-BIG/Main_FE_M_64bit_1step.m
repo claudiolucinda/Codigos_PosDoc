@@ -47,9 +47,36 @@ pmat_b=[dum_mkt dum_marca];
 
 path(path,'C:/Users/claudiolucinda/Dropbox/GIT-Posdoc/RCNL-ABLP-BIG/');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IV Regression - Logit
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+mean_inv=other(:,end-1);
+cond_sh=other(:,end);
+regrs=sparse([ones(size(cond_sh)) regressors(:,2:end) pmat_b]);
+z=other(:,1:6);
+incl_inst=sparse([ones(size(cond_sh)) regressors(:,2:end-1) pmat_b]);
+IV=[incl_inst z];
+[beta_IV_ini,~,VC_ini,Jstat_ini]=ivregression(mean_inv,regrs,IV);
+
+derv=zeros(size(beta_IV_ini));
+phi_coeff=beta_IV_ini(2);
+alpha_coeff=beta_IV_ini(19);
+derv(2)=1./alpha_coeff;
+derv(19)=-phi_coeff./(alpha_coeff.^2);
+vap_par=phi_coeff./alpha_coeff;
+vap_se=sqrt(derv'*VC_ini*derv);
+
+coeffs=[beta_IV_ini(2:5);beta_IV_ini(19);vap_par;Jstat_ini];
+ses=sqrt(diag(VC_ini));
+ses=[ses(2:5);ses(19);vap_se;size(regrs,1)];
+
+data_exp_Logit=[coeffs ses];
+
+dlmwrite([data_dir 'resultsLogit.txt'],data_exp_Logit);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% IV Regression
+% IV Regression - NL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 mean_inv=other(:,end-1);
@@ -58,7 +85,22 @@ regrs=sparse([ones(size(cond_sh)) regressors(:,2:end) pmat_b cond_sh]);
 z=other(:,1:6);
 incl_inst=sparse([ones(size(cond_sh)) regressors(:,2:end-1) pmat_b]);
 IV=[incl_inst z];
-beta_IV_ini=ivregression(mean_inv,regrs,IV);
+[beta_IV_ini,resids_ini,VC_ini,Jstat_ini]=ivregression(mean_inv,regrs,IV);
+
+derv=zeros(size(beta_IV_ini));
+phi_coeff=beta_IV_ini(2);
+alpha_coeff=beta_IV_ini(19);
+derv(2)=1./alpha_coeff;
+derv(19)=-phi_coeff./(alpha_coeff.^2);
+vap_par=phi_coeff./alpha_coeff;
+vap_se=sqrt(derv'*VC_ini*derv);
+
+coeffs_NL=[beta_IV_ini(2:5);beta_IV_ini(19);beta_IV_ini(end);vap_par;Jstat_ini];
+ses_NL=sqrt(diag(VC_ini));
+ses_NL=[ses_NL(2:5);ses_NL(19);ses_NL(end);vap_se;size(regrs,1)];
+
+data_exp_NL=[coeffs_NL ses_NL];
+dlmwrite([data_dir 'resultsNL.txt'],data_exp_NL);
 
 norm_RC_ini=abs(.5.*beta_IV_ini(3:4));
 %norm_RC_ini=abs(.5.*beta_IV_ini(4));
@@ -181,9 +223,9 @@ save([data_dir 'mvaloldNL.mat'],'meanval_FINAL');
 % Second Stage Results
 [bhat,uhat]=ivregression(meanval_FINAL,x1,IV,W);
 
-g=bsxfun(@times,uhat,IV);
-gstar=bsxfun(@minus,g,mean(g))./size(x1,2);
-S=gstar'*gstar;
+% g=bsxfun(@times,uhat,IV);
+% gstar=bsxfun(@minus,g,mean(g))./size(x1,2);
+% S=gstar'*gstar;
 
 delta0NL=meanval_FINAL;
 save([data_dir 'mvaloldNL.mat'],'delta0NL');
@@ -192,7 +234,22 @@ save([data_dir 'mvaloldNL.mat'],'delta0NL');
 %Data.W=W2;
 
 th12RCNL2S      = [theta1 ; thetaRCNL];
-sterrRCNL     = seNL(th12RCNL2S,Data);
+[sterrRCNL, VCRCNL]     = seNL(th12RCNL2S,Data);
+
+
+
+derv=zeros(size(th12RCNL2S));
+phi_coeff=th12RCNL2S(1293);
+alpha_coeff=th12RCNL2S(17);
+derv(1293)=1./alpha_coeff;
+derv(17)=-phi_coeff./(alpha_coeff.^2);
+vap_par=phi_coeff./alpha_coeff;
+vap_se=sqrt(derv'*VCRCNL*derv);
+
+coeffs_RCNL=[th12RCNL2S(2:5);th12RCNL2S(17);th12RCNL2S(1293:end);vap_par;FctValRCNL];
+ses_RCNL=[sterrRCNL(2:5);sterrRCNL(17);sterrRCNL(1293:end);vap_se;size(regrs,1)];
+dlmwrite([data_dir 'resultsRCNL.txt'],data_exp_NL);
+
 
 % Random Coefficient Nested Logit wrt X1
 alpha         = theta1(17);
@@ -200,5 +257,17 @@ priceinc      = x1(:,17);
 
 [ElaRCNL,DiversionRCNL] = ElastNestedLogit(alpha,thetaRCNL,delta0NL,priceinc,Data);
 
-meanElast=mean(diag(ElaRCNL),1);
+%meanElast=mean(diag(ElaRCNL),1);
 
+Data.price=other2(:,3);
+Data.tax=dlmread([data_dir 'tax_rate_T_M.txt'],'\t',1,0);
+Data.marca=marca;
+
+% Computing marginal Costs
+[Mkups,mg_cst] = mg_costs(alpha,thetaRCNL,delta0NL,priceinc,Data);
+checker=[Mkups Data.price Data.tax full(diag(ElaRCNL)) mg_cst];
+
+
+save([data_dir 'dem_results.mat']);
+
+[p_init,s_init]=Solver_BERT(Data.price,th12RCNL2S,Data.x1,Data.x2,Data);
