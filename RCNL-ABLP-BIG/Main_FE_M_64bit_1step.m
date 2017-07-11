@@ -248,7 +248,7 @@ vap_se=sqrt(derv'*VCRCNL*derv);
 
 coeffs_RCNL=[th12RCNL2S(2:5);th12RCNL2S(17);th12RCNL2S(1293:end);vap_par;FctValRCNL];
 ses_RCNL=[sterrRCNL(2:5);sterrRCNL(17);sterrRCNL(1293:end);vap_se;size(regrs,1)];
-dlmwrite([data_dir 'resultsRCNL.txt'],data_exp_NL);
+dlmwrite([data_dir 'resultsRCNL.txt'],[coeffs_RCNL ses_RCNL]);
 
 
 % Random Coefficient Nested Logit wrt X1
@@ -257,7 +257,7 @@ priceinc      = x1(:,17);
 
 [ElaRCNL,DiversionRCNL] = ElastNestedLogit(alpha,thetaRCNL,delta0NL,priceinc,Data);
 
-%meanElast=mean(diag(ElaRCNL),1);
+meanElast=mean(diag(ElaRCNL),1);
 
 Data.price=other2(:,3);
 Data.tax=dlmread([data_dir 'tax_rate_T_M.txt'],'\t',1,0);
@@ -270,4 +270,45 @@ checker=[Mkups Data.price Data.tax full(diag(ElaRCNL)) mg_cst];
 
 save([data_dir 'dem_results.mat']);
 
-[p_init,s_init]=Solver_BERT(Data.price,th12RCNL2S,Data.x1,Data.x2,Data);
+fig=figure; 
+hax=axes; 
+[smoth,smoth_p]=ksdensity(phi_coeff.*dfull(1,:));
+hold on 
+grid on
+plot(smoth_p,smoth)
+line([coeffs_NL(1) coeffs_NL(1)],get(hax,'YLim'),'Color',[1 0 0])
+title('RCNL -- Distribution of $$\alpha_{i} \gamma \kappa \beta_{i}^{m}$$','interpreter','latex')
+x_arr = [0.3 0.36];
+y_arr = [0.6 0.6];
+annotation('textarrow',x_arr,y_arr,'String','NL Estimate ')
+print([data_dir 'RCNLCoeff'],'-dpng');
+hold off
+
+fig=figure; 
+hax=axes; 
+[smoth,smoth_p]=ksdensity((vap_par/100).*dfull(1,:));
+hold on 
+grid on
+plot(smoth_p,smoth)
+line([coeffs_NL(7)./mean(dfull(1,:),2) coeffs_NL(7)./mean(dfull(1,:),2)],get(hax,'YLim'),'Color',[1 0 0])
+title('RCNL -- Distribution of Payback','interpreter','latex')
+x_arr = [0.4 0.26];
+y_arr = [0.9 0.9];
+annotation('textarrow',x_arr,y_arr,'String','NL Estimate ')
+print([data_dir 'RCNLPayback'],'-dpng');
+
+
+annfac=@(r,S)((1+r)./r).*(1-((1+r).^(-S)));
+
+fig=figure; 
+hax=axes; 
+[smoth,smoth_p]=ksdensity((vap_par/(100.*annfac(0.05,15))).*dfull(1,:));
+hold on 
+grid on
+plot(smoth_p,smoth)
+line([coeffs_NL(7)./(mean(dfull(1,:),2).*annfac(0.05,15)) coeffs_NL(7)./(mean(dfull(1,:),2).*annfac(0.05,15))],get(hax,'YLim'),'Color',[1 0 0])
+title('RCNL -- Distribution of $$\gamma$$, with $$r$$ at 8pct and 15yr','interpreter','latex')
+x_arr = [0.4 0.26];
+y_arr = [0.9 0.9];
+annotation('textarrow',x_arr,y_arr,'String','NL Estimate ')
+print([data_dir 'RCNLGamma'],'-dpng');
