@@ -34,6 +34,9 @@ Data.ns=ns;
 [lsum_init]=Logsum_RCNL(p_init,th12RCNL2S,Data.x1,Data.x2,alpha,Data);
 
 save([data_dir 'sim_results.mat']);
+%%%%%%%%%%%%%%%%%%
+% Different Taxes
+%%%%%%%%%%%%%%%%%%
 
 Data.tax=simuls(:,1);
 [p_scen01,s_scen01,checker01]=Solver_BERT(Data.price,th12RCNL2S,Data.x1,Data.x2,Data);
@@ -42,9 +45,13 @@ Data.tax=simuls(:,1);
 
 save([data_dir 'sim_results.mat']);
 
+%%%%%%%%%%%%%%%%%%%
+% Alinhamento de preços aos Internacionais
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Data.tax=dlmread([data_dir 'tax_rate_T_M.txt'],'\t',1,0);
 x2_alt=Data.x2;
-x2_alt(:,1)=simuls(:,2);
+x2_alt(:,1)=simuls(:,2)./10;
+Data=rmfield(Data,'x2');
 [p_scen02,s_scen02,checker02]=Solver_BERT(Data.price,th12RCNL2S,Data.x1,x2_alt,Data);
 
 [lsum_s_scen02]=Logsum_RCNL(p_init,th12RCNL2S,Data.x1,x2_alt,alpha,Data);

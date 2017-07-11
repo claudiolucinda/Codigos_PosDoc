@@ -14,11 +14,13 @@ newprice=zeros(size(oldprice));
 newshare=zeros(size(oldprice));
 checker=zeros(size(unique(cdid)));
 
+
 % Cenário 1
 % Versão sem paralelização
 % solving mkt by mkt
 options=optimset('UseParallel','always','Algorithm','trust-region-reflective','Display','final','MaxFunEvals',1e4,'MaxIter',1e2,'TolX',1e-6,'TolFun',1e-6);
 
+%i=1;
 for i=1:max(Data.cdid)
     selector=(mg_cost>.01 & cdid==i);
     OData.mg_cost=mg_cost(selector,:);
@@ -41,5 +43,6 @@ for i=1:max(Data.cdid)
     newprice(selector,:)=pfin;
     newshare(selector,:)=sfin;
     checker(i,:)=exflag;
+    
 end
 
